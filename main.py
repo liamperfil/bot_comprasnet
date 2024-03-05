@@ -1,7 +1,6 @@
 # pip install selenium
 # pip install webdriver-manager
 # pip install chromedriver-binary
-# pip install getpass
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -26,7 +25,8 @@ print("Digite o número da dispensa: ")
 NumeroDispensa = input()
 cnpj = " 50120844000144"
 senha = getpass.getpass("Digite sua senha: ")
-MeuPreco = 7300.0
+print("Digite o preço do item 1: ")
+MeuPreco = input()
 
 # Inicializa o navegador webdriver Chrome
 navegador = webdriver.Chrome(service=servico)
