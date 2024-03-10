@@ -55,17 +55,29 @@ def converte_preco_str(preco_float):
       return preco_str
 
 def melhor_preco(f_item):
-    valor_cd = navegador.find_element("xpath", xpath_cd).get_attribute('value')
+    try:
+        WebDriverWait(navegador, 5).until(EC.presence_of_element_located((By.XPATH, xpath_cd)))
+        valor_cd = navegador.find_element("xpath", xpath_cd).get_attribute('value')
+    except:
+        valor_cd = input("Digite o value da compra direta, ex: 112233")
     valor_cd = f_item + int(valor_cd)
     xpath_melhor_preco = '//*[@id="divMelhorLance_' + str(valor_cd) + '_"]'
-    melhor_preco_reg = navegador.find_element("xpath", xpath_melhor_preco).text # recebe preço em string
+    try:
+        WebDriverWait(navegador, 5).until(EC.presence_of_element_located((By.XPATH, xpath_melhor_preco)))
+        melhor_preco_reg = navegador.find_element("xpath", xpath_melhor_preco).text # recebe preço em string
+    except:
+        melhor_preco_reg = input("Digite o melhor preço registrado para o item: ", (f_item+1))
     melhor_preco_reg = converte_preco_float(melhor_preco_reg)
     return melhor_preco_reg
 
 def func_em_disputa(f_item):
-    compra_direta = navegador.find_element("xpath", xpath_cd).get_attribute('value')
-    compra_direta = f_item + int(compra_direta)
-    xpath_frm_lance = '//*[@id="divValor_' + str(compra_direta) + '_"]/span[2]/span/input[1]'
+    try:
+        WebDriverWait(navegador, 5).until(EC.presence_of_element_located((By.XPATH, xpath_cd)))
+        valor_cd = navegador.find_element("xpath", xpath_cd).get_attribute('value')
+    except:
+        valor_cd = input("Digite o value da compra direta, ex: 112233")
+    valor_cd = f_item + int(valor_cd)
+    xpath_frm_lance = '//*[@id="divValor_' + str(valor_cd) + '_"]/span[2]/span/input[1]'
     try:
         WebDriverWait(navegador, 2).until(EC.visibility_of_element_located((By.XPATH, xpath_frm_lance)))
         return True
@@ -108,21 +120,14 @@ try:
 except:
     input('Verifique as credenciais, ENTER para continuar')
 
-try:
-    WebDriverWait(navegador, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="tblCabelho"]/tbody/tr[1]/td[3]')))
-except:
-    input("Pressione qualquer tecla para continuar...")
+input("Pressione qualquer tecla para continuar...")
 
 navegador.get(endereco)
-
-input("Depurado até aqui. Pressione qualquer tecla para continuar...")
 
 em_disputa = [None] * quant_item
 for i, x in enumerate(em_disputa):
     em_disputa[i] = func_em_disputa(i)
-    if x == False:
-        continue
-    if (meu_preco[i] != 0 and meu_preco[i] < melhor_preco(i)):
+    if (em_disputa[i] and meu_preco[i] != 0 and meu_preco[i] < melhor_preco(i)):
         try:
             WebDriverWait(navegador, 1).until(EC.visibility_of_element_located((By.XPATH, xpath_marca(i+1))))
             elemento = navegador.find_element("xpath", xpath_marca(i+1)).send_keys("TR")
@@ -143,13 +148,20 @@ while (any(em_disputa)):
             lance -= random.uniform(0.01, 1)
             lance = "{:.2f}".format(lance)
             lance = converte_preco_str(lance)
-            elemento = navegador.find_element("xpath", xpath_frm_lance(item))
-            elemento.send_keys(Keys.BACK_SPACE * 3)
-            elemento.send_keys(lance)
-        print("item: ", item)
+            try:
+                WebDriverWait(navegador, 5).until(EC.presence_of_element_located((By.XPATH, xpath_frm_lance(item))))
+                WebDriverWait(navegador, 5).until(EC.visibility_of_element_located((By.XPATH, xpath_frm_lance(item))))
+                elemento = navegador.find_element("xpath", xpath_frm_lance(item))
+                time.sleep(0.1)
+                elemento.send_keys(lance)
+            except:
+                print("Algo deu errado no item: ", (item+1))
+                print("Digite seu preço manualmente.")
+                input("Pressione qualquer tecla para continuar...")
         item += 1
     input("PRESSIONE QUALQUER TECLA PARA ENVIAR")
     #elemento = navegador.find_element("xpath", xpath_btn_enviar).click()
+
 
 print("ATENCAO PRECO MUITO BAIXO")
 input("PRESSIONE QUALQUER TECLA PARA FINALIZAR A SESSÃO")
