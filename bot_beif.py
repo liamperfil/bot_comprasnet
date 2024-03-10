@@ -42,6 +42,7 @@ xpath_frm_cnpj = '//*[@id="UserName"]'
 xpath_frm_senha = '//*[@id="Password"]'
 xpath_btn_entrar = '//*[@id="btn-login"]' # Login/Autenticação
 xpath_btn_enviar = '//*[@id="layBotaoEnviar"]/span' # Enviar lance
+xpath_btn_cookie = '//*[@id="btn-accept"]'
 
 def converte_preco_float(preco_str):
       preco_float = re.sub('[^\d,]', '', preco_str)
@@ -85,22 +86,36 @@ def xpath_modelo(param):
     xpath = '//*[@id="dtgPesquisaItens_ctl' + str(param).zfill(2) + '_tbxModelo"]'
     return xpath
 
-elemento = navegador.find_element("xpath", xpath_btn_acessar).click()
-elemento = navegador.find_element("xpath", xpath_frm_cnpj)
-elemento.send_keys(cnpj)
-elemento = navegador.find_element("xpath", xpath_frm_senha)
-elemento.send_keys(senha)
-elemento = navegador.find_element("xpath", '//*[@id="btn-accept"]').click() # Aceitar cookie
+try:
+    WebDriverWait(navegador, 60).until(EC.element_to_be_clickable((By.XPATH, xpath_btn_acessar)))
+    elemento = navegador.find_element("xpath", xpath_btn_acessar).click()
+except:
+    input('Nao encontrei o botao acessar, ENTER para continuar')
 
-time.sleep(2)
+try:
+    WebDriverWait(navegador, 2).until(EC.element_to_be_clickable((By.XPATH, xpath_btn_cookie)))
+    elemento = navegador.find_element("xpath", xpath_btn_cookie).click()
+except:
+    print('Onde estao os cookies?')
 
-elemento = navegador.find_element("xpath", xpath_btn_entrar).click() # Login/Autenticação
+try:
+    WebDriverWait(navegador, 60).until(EC.presence_of_element_located((By.XPATH, xpath_frm_cnpj)))
+    elemento = navegador.find_element("xpath", xpath_frm_cnpj)
+    elemento.send_keys(cnpj)
+    elemento = navegador.find_element("xpath", xpath_frm_senha)
+    elemento.send_keys(senha)
+    elemento = navegador.find_element("xpath", xpath_btn_entrar).click() # Login/Autenticação
+except:
+    input('Verifique as credenciais, ENTER para continuar')
 
-time.sleep(2)
+try:
+    WebDriverWait(navegador, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="tblCabelho"]/tbody/tr[1]/td[3]')))
+except:
+    input("Pressione qualquer tecla para continuar...")
 
 navegador.get(endereco)
 
-input("Pressione qualquer tecla para continuar...")
+input("Depurado até aqui. Pressione qualquer tecla para continuar...")
 
 em_disputa = [None] * quant_item
 for i, x in enumerate(em_disputa):
