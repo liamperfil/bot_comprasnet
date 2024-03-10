@@ -66,7 +66,7 @@ def func_em_disputa(f_item):
     compra_direta = f_item + int(compra_direta)
     xpath_frm_lance = '//*[@id="divValor_' + str(compra_direta) + '_"]/span[2]/span/input[1]'
     try:
-        WebDriverWait(navegador, 2).until(EC.presence_of_element_located((By.XPATH, xpath_frm_lance)))
+        WebDriverWait(navegador, 2).until(EC.visibility_of_element_located((By.XPATH, xpath_frm_lance)))
         return True
     except:
         return False
@@ -109,12 +109,12 @@ for i, x in enumerate(em_disputa):
         continue
     if (meu_preco[i] != 0 and meu_preco[i] < melhor_preco(i)):
         try:
-            WebDriverWait(navegador, 5).until(EC.visibility_of_element_located((By.XPATH, xpath_marca(i+1))))
+            WebDriverWait(navegador, 1).until(EC.visibility_of_element_located((By.XPATH, xpath_marca(i+1))))
             elemento = navegador.find_element("xpath", xpath_marca(i+1)).send_keys("TR")
         except:
             print("marca não solicitada")
         try:
-            WebDriverWait(navegador, 5).until(EC.visibility_of_element_located((By.XPATH, xpath_modelo(i+1))))
+            WebDriverWait(navegador, 1).until(EC.visibility_of_element_located((By.XPATH, xpath_modelo(i+1))))
             elemento = navegador.find_element("xpath", xpath_modelo(i+1)).send_keys("TR")
         except:
             print("modelo não solicitado")
@@ -122,6 +122,7 @@ for i, x in enumerate(em_disputa):
 while (any(em_disputa)):
     item = 0
     while (item < quant_item):
+        em_disputa[item] = func_em_disputa(item)
         if (meu_preco[item] != 0 and em_disputa[item] and meu_preco[item] < melhor_preco(item)):
             lance = melhor_preco(item)
             lance -= random.uniform(0.01, 1)
@@ -132,8 +133,6 @@ while (any(em_disputa)):
             elemento.send_keys(lance)
         print("item: ", item)
         item += 1
-    for i, _ in enumerate(em_disputa):
-        em_disputa[i] = func_em_disputa(i)
     input("PRESSIONE QUALQUER TECLA PARA ENVIAR")
     #elemento = navegador.find_element("xpath", xpath_btn_enviar).click()
 
