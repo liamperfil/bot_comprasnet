@@ -91,19 +91,27 @@ while (any(em_disputa)):
         if (meu_preco[i] != 0 and vence_perde(i) and em_disputa[i]):
             lance = melhor_preco(i)
             lance -= random.uniform(0.01, 1)
-            elemento = navegador.find_element("xpath", xpath_frm_lance(i)) # Campo formulario de lance
-            elemento.send_keys("{:.4f}".format(lance)) # Enviando lances com 4 casas decimais
+            try:
+                WebDriverWait(navegador, 5).until(EC.presence_of_element_located((By.XPATH, xpath_frm_lance(i))))
+                elemento = navegador.find_element("xpath", xpath_frm_lance(i)) # Campo formulario de lance
+                elemento.send_keys("{:.4f}".format(lance)) # Enviando lances com 4 casas decimais
+            except:
+                print("Erro aguardando xpath_frm_lance item: ", i)
+                input("Pressione qualquer tecla para encerrar...")
             deu_lance = True
         i += 1
     if (deu_lance):
-        navegador.find_element("xpath", xpath_btn_enviar).click()
-        aguardar_confirmacao = WebDriverWait(navegador, 300).until(
-            EC.visibility_of_element_located((By.XPATH, xpath_btn_enviar))
-        )
+        try:
+            WebDriverWait(navegador, 5).until(EC.element_to_be_clickable((By.XPATH, xpath_btn_enviar)))
+            navegador.find_element("xpath", xpath_btn_enviar).click()
+        except:
+            print("Erro aguardando xpath_btn_enviar")
+            input("Pressione qualquer tecla para encerrar...")
+        try:
+            WebDriverWait(navegador, 300).until(EC.visibility_of_element_located((By.XPATH, xpath_btn_enviar)))
+        except:
+            print("Erro aguardando xpath_btn_enviar")
+            input("Pressione qualquer tecla para encerrar...")
 
 print("Disputa encerrada!")
 input("Pressione qualquer tecla para encerrar...")
-
-# //*[@id="Dados"]/div[4]/table/thead/tr/th[3]
-# //*[@id="btnMostrarDetalhe"]
-# //*[@id="btnVoltar"]
