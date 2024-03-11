@@ -20,7 +20,7 @@ senha = getpass.getpass("Digite sua senha: ")
 meu_preco = 1111, 2222, 3333 # Isto precisa ser uma tupla ou lista, enão escreva entre parenteses ou com uma virgula no final
 
 quant_item = len(meu_preco)
-em_disputa = True * quant_item
+em_disputa = [True] * quant_item
 xpath_btn_enviar = '//*[@id="btnCotarPrecoRodape"]'
 
 servico = Service(ChromeDriverManager().install()) # Atualiza o webdriver
