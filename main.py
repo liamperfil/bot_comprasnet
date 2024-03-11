@@ -14,89 +14,95 @@ import random
 import getpass # modulo para receber senhas sem exibi-las no terminal enquanto o usuário digita
 import time
 
-servico = Service(ChromeDriverManager().install()) # Atualiza o webdriver
-
-def ValorNumerico(StrValor):
-      numero = re.sub('[^\d,]', '', StrValor)
-      numero = float(numero.replace(',', '.'))
-      return numero
-
 num_dispensa = input("Cole o numero da dispensa: ")
 cnpj = " " + input("Cole o cnpj: ")
 senha = getpass.getpass("Digite sua senha: ")
-meu_preco = input("Digite seu menor preço: ")
+meu_preco = 1111, 2222, 3333
 
-# Inicializa o navegador webdriver Chrome
+quant_item = len(meu_preco)
+em_disputa = True * quant_item
+xpath_btn_enviar = '//*[@id="btnCotarPrecoRodape"]'
+
+servico = Service(ChromeDriverManager().install()) # Atualiza o webdriver
 navegador = webdriver.Chrome(service=servico)
-
-# Abre uma página da web
 navegador.get("https://comprasnet3.ba.gov.br/Fornecedor/LoginDispensa.asp?txtFuncionalidade=&txtNumeroDispensa=" + num_dispensa)
 
-# Antes de continuar aguardar o XPATH CNPJ e SENHA até um prazo de 300 segundos (5 min)
-aguardar_xpath = WebDriverWait(navegador, 300).until(
-    EC.visibility_of_element_located((By.XPATH, '//*[@id="txtCnpj"]'))
-)
-aguardar_xpath = WebDriverWait(navegador, 300).until(
-    EC.visibility_of_element_located((By.XPATH, '//*[@id="txtSenha"]'))
-)
+def converte_preco_float(str_valor):
+      numero = re.sub('[^\d,]', '', str_valor)
+      numero = float(numero.replace(',', '.'))
+      return numero
 
-# Preencher os dados de login e senha
-elemento = navegador.find_element("xpath", '//*[@id="txtCnpj"]')
+def xpath_vence_perde(item):
+    n_item = 4 * (item + 1)
+    xpath = '//*[@id="frmCotarCotacaoEmDisputa"]/table/tbody/tr[' + str(n_item) + ']/td[8]/span'
+    return xpath
 
-for char in cnpj:
-    elemento.send_keys(char)
-    time.sleep(0.1)
-
-elemento = navegador.find_element("xpath", '//*[@id="txtSenha"]')
-
-for char in senha:
-    elemento.send_keys(char)
-    time.sleep(0.1)
-    
-elemento = navegador.find_element("xpath", '//*[@id="btnAcessar"]').click()
-
-# Verifica se a disputa encerrou, aguardar o XPATH Você vence! ou Você perde! até um prazo de 10 segundos
-XpathVencePerde = '//*[@id="frmCotarCotacaoEmDisputa"]/table/tbody/tr[4]/td[8]/span'
-try:
-    WebDriverWait(navegador, 60).until(EC.presence_of_element_located((By.XPATH, XpathVencePerde)))
-    EmDisputa = True
-except:
-    EmDisputa = False
-
-while (EmDisputa):
-    TxtVencePerde = navegador.find_element("xpath", XpathVencePerde).text # Texto Você vence! ou Você perde!
-    ChecarPreco = navegador.find_element("xpath", '//*[@id="frmCotarCotacaoEmDisputa"]/table/tbody/tr[4]/td[7]').text # recebe preço em string
-    ChecarPreco = ValorNumerico(ChecarPreco) # converter preço em número
-    
-    while (TxtVencePerde == "Você perde!" and ChecarPreco > meu_preco):
-        ChecarPreco -= random.uniform(0.01, 1) # Lance entre 1 centavo e 1 real para não ficar uniforme
-        elemento = navegador.find_element("xpath", '//*[@id="txtFrmPreco0"]') # Campo formulario de lance
-        elemento.send_keys("{:.4f}".format(ChecarPreco)) # Enviando lances com 4 casas decimais
-        elemento = navegador.find_element("xpath", '//*[@id="btnCotarPrecoRodape"]').click() # Botao cotar preço
-        
-        # O comando abaixo aguarda o usuario marcar o captcha e confirmar o lance
-        # Ao fazer isso o xpath fica disponível e o fluxo segue
-        aguardar_xpath = WebDriverWait(navegador, 300).until(
-            EC.visibility_of_element_located((By.XPATH, '//*[@id="btnCotarPrecoRodape"]'))
-        )
-        TxtVencePerde = navegador.find_element("xpath", XpathVencePerde).text # Atualiza Você vence! ou Você perde!
-        ChecarPreco = navegador.find_element("xpath", '//*[@id="frmCotarCotacaoEmDisputa"]/table/tbody/tr[4]/td[7]').text # Atualiza o preço
-        ChecarPreco = ValorNumerico(ChecarPreco) # Converte preço em número
-
-    while (TxtVencePerde == "Você vence!"):
-        navegador.refresh()
-        time.sleep(1)
-        TxtVencePerde = navegador.find_element("xpath", XpathVencePerde).text
-
-    # Verifica se ainda está em disputa
+def vence_perde(param):
     try:
-        WebDriverWait(navegador, 60).until(EC.presence_of_element_located((By.XPATH, XpathVencePerde)))
-        EmDisputa = True
+        WebDriverWait(navegador, 5).until(EC.presence_of_element_located((By.XPATH, xpath_vence_perde(param))))
+        elemento = navegador.find_element("xpath", xpath_vence_perde(param)).text
+        if (elemento == "Você perde!"):
+            return True
+        if (elemento == "Você vence!"):
+            return False
     except:
-        EmDisputa = False
-        print("Mensagem: disputa encerrada")
+        print("Erro xpath_vence_perde")
+        input("Pressione qualquer tecla para continuar...")
+        return True
 
-time.sleep(10)
+def melhor_preco(f_item):
+    n_item = 4 * (f_item + 1)
+    xpath = '//*[@id="frmCotarCotacaoEmDisputa"]/table/tbody/tr[' + str(n_item) + ']/td[7]'
+    try:
+        WebDriverWait(navegador, 5).until(EC.presence_of_element_located((By.XPATH, xpath)))
+        preco = navegador.find_element("xpath", xpath).text
+        preco = converte_preco_float(preco) # converter preço em número
+        return preco
+    except:
+        print("Erro: def melhor_preco item: ", f_item)
+        input("Pressione qualquer tecla para continuar...")
+
+def xpath_frm_lance(f_item):
+    xpath = '//*[@id="txtFrmPreco' + str(f_item) + '"]'
+    return xpath
+
+# Credenciais/Autenticação
+try:
+    WebDriverWait(navegador, 10).until(EC.visibility_of_element_located((By.XPATH, '//*[@id="txtCnpj"]')))
+    WebDriverWait(navegador, 10).until(EC.visibility_of_element_located((By.XPATH, '//*[@id="txtSenha"]')))
+    elemento = navegador.find_element("xpath", '//*[@id="txtCnpj"]')
+    for char in cnpj:
+        elemento.send_keys(char)
+        time.sleep(0.1)
+    elemento = navegador.find_element("xpath", '//*[@id="txtSenha"]')
+    for char in senha:
+        elemento.send_keys(char)
+        time.sleep(0.1)
+    navegador.find_element("xpath", '//*[@id="btnAcessar"]').click()
+except:
+    print("Digite as credenciais manualmente.")
+    input("Pressione qualquer tecla para continuar...")
+
+while (any(em_disputa)):
+    i = deu_lance = 0
+    navegador.refresh()
+    while (i < quant_item):
+        em_disputa[i] = meu_preco[i] <= melhor_preco(i)
+        if (meu_preco[i] != 0 and vence_perde(i) and em_disputa[i]):
+            lance = melhor_preco(i)
+            lance -= random.uniform(0.01, 1)
+            elemento = navegador.find_element("xpath", xpath_frm_lance(i)) # Campo formulario de lance
+            elemento.send_keys("{:.4f}".format(lance)) # Enviando lances com 4 casas decimais
+            deu_lance = True
+        i += 1
+    if (deu_lance):
+        navegador.find_element("xpath", xpath_btn_enviar).click()
+        aguardar_confirmacao = WebDriverWait(navegador, 300).until(
+            EC.visibility_of_element_located((By.XPATH, xpath_btn_enviar))
+        )
+
+print("Disputa encerrada!")
+input("Pressione qualquer tecla para encerrar...")
 
 # //*[@id="Dados"]/div[4]/table/thead/tr/th[3]
 # //*[@id="btnMostrarDetalhe"]
