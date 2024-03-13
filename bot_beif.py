@@ -4,30 +4,23 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
-from cryptography.fernet import Fernet
-from selenium.webdriver.common.keys import Keys
 
 import re
 import random
-import getpass
 import time
 
-meu_preco = 500, 500, 500 # Isso é uma tupla, se for um item só é necessario que termine em virgula
-endereco = input("Informe o endereço: ")
-chave = input("Cole a chave: ").encode()
-fernet = Fernet(chave)
+meu_preco = 700, 0 # Isso é uma tupla, se for um item só é necessario que termine em virgula
+endereco = input('Cole o endereco: ')
 
-cnpj = 'gAAAAABl674n5lqx8oqT0R9DYpsr1HkuSsw2_LIhtU5MY2Z4fXcWEhmEgR6wgbYLURKUcNoTxzHsGAS64EUX79rY4TsP0ZqgwA=='
-cnpj = cnpj.encode()
-cnpj = fernet.decrypt(cnpj).decode()
-
-senha = 'gAAAAABl68J91nQsr0urGT4NrYAtdS2yDxZaolYyM5V0mVZKQG_oh_YDxICQHOXYHDD1Q_fdBjjZFAPCCXRVkmApmApgY1nf2w=='
-senha = senha.encode()
-senha = fernet.decrypt(senha).decode()
-
-#cnpj = input("Cole o cnpj: ")
-#senha = getpass.getpass("Cole a senha: ")
-#endereco = input("Cole o site")
+try:
+    with open('login.key', 'r') as response:
+        login = response.read()
+    with open('senha.key', 'r') as response:
+        senha = response.read()
+except:
+    print('usuário e senha não encontrado no sistema')
+    login = input('Digite o usuário: ')
+    senha = input('Digite a senha: ')
 
 quant_item = len(meu_preco)
 
@@ -55,28 +48,19 @@ def converte_preco_str(preco_float):
       return preco_str
 
 def melhor_preco(f_item):
-    try:
-        WebDriverWait(navegador, 5).until(EC.presence_of_element_located((By.XPATH, xpath_cd)))
-        valor_cd = navegador.find_element("xpath", xpath_cd).get_attribute('value')
-    except:
-        valor_cd = input("Digite o value da compra direta, ex: 112233")
-    valor_cd = f_item + int(valor_cd)
+    valor_cd = f_item + int(disputa)
     xpath_melhor_preco = '//*[@id="divMelhorLance_' + str(valor_cd) + '_"]'
     try:
         WebDriverWait(navegador, 5).until(EC.presence_of_element_located((By.XPATH, xpath_melhor_preco)))
         melhor_preco_reg = navegador.find_element("xpath", xpath_melhor_preco).text # recebe preço em string
+        return converte_preco_float(melhor_preco_reg)
     except:
-        melhor_preco_reg = input("Digite o melhor preço registrado para o item: ", (f_item+1))
-    melhor_preco_reg = converte_preco_float(melhor_preco_reg)
-    return melhor_preco_reg
+        print("Digite o melhor preço registrado para o item: ", (f_item+1))
+        melhor_preco_reg = input()
+        return converte_preco_float(melhor_preco_reg)
 
 def func_em_disputa(f_item):
-    try:
-        WebDriverWait(navegador, 5).until(EC.presence_of_element_located((By.XPATH, xpath_cd)))
-        valor_cd = navegador.find_element("xpath", xpath_cd).get_attribute('value')
-    except:
-        valor_cd = input("Digite o value da compra direta, ex: 112233")
-    valor_cd = f_item + int(valor_cd)
+    valor_cd = f_item + int(disputa)
     xpath_frm_lance = '//*[@id="divValor_' + str(valor_cd) + '_"]/span[2]/span/input[1]'
     try:
         WebDriverWait(navegador, 2).until(EC.visibility_of_element_located((By.XPATH, xpath_frm_lance)))
@@ -85,9 +69,8 @@ def func_em_disputa(f_item):
         return False
     
 def xpath_frm_lance(f_item):
-    compra_direta = navegador.find_element("xpath", xpath_cd).get_attribute('value')
-    compra_direta = f_item + int(compra_direta)
-    xpath = '//*[@id="divValor_' + str(compra_direta) + '_"]/span[2]/span/input[1]'
+    valor_cd = f_item + int(disputa)
+    xpath = '//*[@id="divValor_' + str(valor_cd) + '_"]/span[2]/span/input[1]'
     return xpath
 
 def xpath_marca(param):
@@ -105,37 +88,40 @@ except:
     input('Nao encontrei o botao acessar, ENTER para continuar')
 
 try:
-    WebDriverWait(navegador, 2).until(EC.element_to_be_clickable((By.XPATH, xpath_btn_cookie)))
+    WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, xpath_btn_cookie)))
     elemento = navegador.find_element("xpath", xpath_btn_cookie).click()
 except:
     print('Onde estao os cookies?')
 
 try:
     WebDriverWait(navegador, 60).until(EC.presence_of_element_located((By.XPATH, xpath_frm_cnpj)))
-    elemento = navegador.find_element("xpath", xpath_frm_cnpj)
-    elemento.send_keys(cnpj)
-    elemento = navegador.find_element("xpath", xpath_frm_senha)
-    elemento.send_keys(senha)
-    elemento = navegador.find_element("xpath", xpath_btn_entrar).click() # Login/Autenticação
+    navegador.find_element("xpath", xpath_frm_cnpj).send_keys(login)
+    navegador.find_element("xpath", xpath_frm_senha).send_keys(senha)
+    time.sleep(0.5)
+    navegador.find_element("xpath", xpath_btn_entrar).click() # Login/Autenticação
 except:
     input('Verifique as credenciais, ENTER para continuar')
 
-input("Pressione qualquer tecla para continuar...")
+time.sleep(2)
 
 navegador.get(endereco)
+
+try:    
+    WebDriverWait(navegador, 60).until(EC.presence_of_element_located((By.XPATH, xpath_cd)))
+    disputa = navegador.find_element("xpath", xpath_cd).get_attribute('value')
+except:
+    disputa = int(input('Erro, digite o n da disputa: '))
 
 em_disputa = [None] * quant_item
 for i, x in enumerate(em_disputa):
     em_disputa[i] = func_em_disputa(i)
-    if (em_disputa[i] and meu_preco[i] != 0 and meu_preco[i] < melhor_preco(i)):
+    if (em_disputa[i] and meu_preco[i] > 0 and meu_preco[i] < melhor_preco(i)):
         try:
-            WebDriverWait(navegador, 1).until(EC.visibility_of_element_located((By.XPATH, xpath_marca(i+1))))
-            elemento = navegador.find_element("xpath", xpath_marca(i+1)).send_keys("TR")
+            navegador.find_element("xpath", xpath_marca(i+1)).send_keys("TR")
         except:
             print("marca não solicitada")
         try:
-            WebDriverWait(navegador, 1).until(EC.visibility_of_element_located((By.XPATH, xpath_modelo(i+1))))
-            elemento = navegador.find_element("xpath", xpath_modelo(i+1)).send_keys("TR")
+            navegador.find_element("xpath", xpath_modelo(i+1)).send_keys("TR")
         except:
             print("modelo não solicitado")
 
@@ -161,7 +147,6 @@ while (any(em_disputa)):
         item += 1
     input("PRESSIONE QUALQUER TECLA PARA ENVIAR")
     #elemento = navegador.find_element("xpath", xpath_btn_enviar).click()
-
 
 print("ATENCAO PRECO MUITO BAIXO")
 input("PRESSIONE QUALQUER TECLA PARA FINALIZAR A SESSÃO")
