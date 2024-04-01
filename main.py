@@ -84,7 +84,7 @@ except:
     input("Pressione qualquer tecla para continuar...")
 
 while (any(em_disputa)):
-    i = deu_lance = 0
+    i, deu_lance = 0, False
     navegador.refresh()
     while (i < quant_item):
         em_disputa[i] = meu_preco[i] <= melhor_preco(i)
@@ -92,7 +92,6 @@ while (any(em_disputa)):
             lance = melhor_preco(i)
             lance -= random.uniform(0.01, 1)
             try:
-                WebDriverWait(navegador, 5).until(EC.presence_of_element_located((By.XPATH, xpath_frm_lance(i))))
                 elemento = navegador.find_element("xpath", xpath_frm_lance(i)) # Campo formulario de lance
                 elemento.send_keys("{:.4f}".format(lance)) # Enviando lances com 4 casas decimais
             except:
@@ -102,7 +101,6 @@ while (any(em_disputa)):
         i += 1
     if (deu_lance):
         try:
-            WebDriverWait(navegador, 5).until(EC.element_to_be_clickable((By.XPATH, xpath_btn_enviar)))
             navegador.find_element("xpath", xpath_btn_enviar).click()
         except:
             print("Erro aguardando xpath_btn_enviar")
