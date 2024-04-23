@@ -14,23 +14,54 @@ import random
 import getpass # modulo para receber senhas sem exibi-las no terminal enquanto o usuário digita
 import time
 
+def converte_preco_float(str_valor):
+    numero = re.sub('[^\d,]', '', str_valor)
+    numero = float(numero.replace(',', '.'))
+    return numero
+
 num_dispensa = input("Cole o numero da dispensa: ")
 cnpj = " " + input("Cole o cnpj: ")
 senha = getpass.getpass("Digite sua senha: ")
-meu_preco = 1111, 2222, 3333 # Isto precisa ser uma tupla ou lista, enão escreva entre parenteses ou com uma virgula no final
-
-quant_item = len(meu_preco)
-em_disputa = [True] * quant_item
-xpath_btn_enviar = '//*[@id="btnCotarPrecoRodape"]'
 
 servico = Service(ChromeDriverManager().install()) # Atualiza o webdriver
 navegador = webdriver.Chrome(service=servico)
 navegador.get("https://comprasnet3.ba.gov.br/Fornecedor/LoginDispensa.asp?txtFuncionalidade=&txtNumeroDispensa=" + num_dispensa)
+time.sleep(1)
 
-def converte_preco_float(str_valor):
-      numero = re.sub('[^\d,]', '', str_valor)
-      numero = float(numero.replace(',', '.'))
-      return numero
+# Credenciais/Autenticação
+try:
+    WebDriverWait(navegador, 10).until(EC.visibility_of_element_located((By.XPATH, '//*[@id="txtCnpj"]')))
+    navegador.find_element("xpath", '//*[@id="txtCnpj"]').send_keys(cnpj)
+    navegador.find_element("xpath", '//*[@id="txtSenha"]').send_keys(senha)
+    navegador.find_element("xpath", '//*[@id="btnAcessar"]').click()
+except:
+    print("Credencie manualmente.")
+    input("Pressione qualquer tecla para continuar...")
+
+while True:
+    try:
+        quant_item = int(input('Digite a quantidade de itens na disputa: '))
+        if quant_item <= 0:
+            print("Por favor, insira um número inteiro positivo.")
+            continue
+        break
+    except ValueError:
+        print("Por favor, insira um número inteiro positivo.")
+
+# Obter preços dos itens
+meu_preco = []
+for i in range(quant_item):
+    while True:
+        try:
+            preco = input(f'Digite o preço para o item {i + 1}: ')
+            preco = converte_preco_float(preco)
+            meu_preco.append(preco)
+            break
+        except ValueError:
+            print("Por favor, insira um número válido para o preço.")
+
+em_disputa = [True] * quant_item
+xpath_btn_enviar = '//*[@id="btnCotarPrecoRodape"]'
 
 def xpath_vence_perde(item):
     n_item = 4 * (item + 1)
@@ -66,22 +97,8 @@ def xpath_frm_lance(f_item):
     xpath = '//*[@id="txtFrmPreco' + str(f_item) + '"]'
     return xpath
 
-# Credenciais/Autenticação
-try:
-    WebDriverWait(navegador, 10).until(EC.visibility_of_element_located((By.XPATH, '//*[@id="txtCnpj"]')))
-    WebDriverWait(navegador, 10).until(EC.visibility_of_element_located((By.XPATH, '//*[@id="txtSenha"]')))
-    elemento = navegador.find_element("xpath", '//*[@id="txtCnpj"]')
-    for char in cnpj:
-        elemento.send_keys(char)
-        time.sleep(0.1)
-    elemento = navegador.find_element("xpath", '//*[@id="txtSenha"]')
-    for char in senha:
-        elemento.send_keys(char)
-        time.sleep(0.1)
-    navegador.find_element("xpath", '//*[@id="btnAcessar"]').click()
-except:
-    print("Digite as credenciais manualmente.")
-    input("Pressione qualquer tecla para continuar...")
+print('----------------------------------------')
+input("Pressione qualquer tecla para INICIAR...")
 
 while (any(em_disputa)):
     i, deu_lance = 0, False
@@ -90,7 +107,7 @@ while (any(em_disputa)):
         em_disputa[i] = meu_preco[i] <= melhor_preco(i)
         if (meu_preco[i] != 0 and vence_perde(i) and em_disputa[i]):
             lance = melhor_preco(i)
-            lance -= random.uniform(0.01, 1)
+            lance -= random.uniform(0.01, 0.1)
             try:
                 elemento = navegador.find_element("xpath", xpath_frm_lance(i)) # Campo formulario de lance
                 elemento.send_keys("{:.4f}".format(lance)) # Enviando lances com 4 casas decimais

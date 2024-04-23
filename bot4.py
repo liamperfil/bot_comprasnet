@@ -20,6 +20,7 @@ def ValorNumerico(StrValor):
       numero = float(numero.replace(',', '.'))
       return numero
 
+#########################################
 print("Digite o número da dispensa: ")
 NumeroDispensa = str(input())
 print("Digite o cnpj: ")
@@ -28,6 +29,7 @@ senha = str(getpass.getpass("Digite sua senha: "))
 print("Digite o preço do item x: ")
 iMeuPreco = input()
 MeuPreco = ValorNumerico(iMeuPreco)
+#########################################
 
 # Inicializa o navegador webdriver Chrome E Abre uma página da web
 navegador = webdriver.Chrome(service=servico)
