@@ -21,13 +21,10 @@ def ValorNumerico(StrValor):
       return numero
 
 #########################################
-print("Digite o número da dispensa: ")
-NumeroDispensa = str(input())
-print("Digite o cnpj: ")
-cnpj = " " + str(input())
+NumeroDispensa = input("Digite o número da dispensa: ")
+cnpj = " " + input("Digite o cnpj: ")
 senha = str(getpass.getpass("Digite sua senha: "))
-print("Digite o preço do item x: ")
-iMeuPreco = input()
+iMeuPreco = input("Digite o preço do item x: ")
 MeuPreco = ValorNumerico(iMeuPreco)
 #########################################
 
