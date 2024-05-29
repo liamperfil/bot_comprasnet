@@ -8,15 +8,15 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 
-import re # modulo de expressões regulares (regex)
-import random
+from re import sub # modulo de expressões regulares (regex)
+from random import uniform
 import getpass # modulo para receber senhas sem exibi-las no terminal enquanto o usuário digita
-import time
+from time import sleep
 
 servico = Service(ChromeDriverManager().install()) # Atualiza o webdriver
 
 def ValorNumerico(StrValor):
-      numero = re.sub('[^\d,]', '', StrValor)
+      numero = sub('[^\d,]', '', StrValor)
       numero = float(numero.replace(',', '.'))
       return numero
 
@@ -41,17 +41,10 @@ try:
 except:
     input('Insira as credenciais manualmente')
 
-XpathVencePerde = '//*[@id="frmCotarCotacaoEmDisputa"]/table/tbody/tr[4]/td[8]/span'
-#ITEM 1 = '//*[@id="frmCotarCotacaoEmDisputa"]/table/tbody/tr[4]/td[8]/span'
-#ITEM 4 = '//*[@id="frmCotarCotacaoEmDisputa"]/table/tbody/tr[16]/td[8]/span'
-
-xpath_checar_preco = '//*[@id="frmCotarCotacaoEmDisputa"]/table/tbody/tr[4]/td[7]'
-#ITEM 1 = '//*[@id="frmCotarCotacaoEmDisputa"]/table/tbody/tr[4]/td[7]'
-#ITEM 4 = '//*[@id="frmCotarCotacaoEmDisputa"]/table/tbody/tr[16]/td[7]'
-
-xpath_frm_preco = '//*[@id="txtFrmPreco0"]'
-#ITEM 1 = '//*[@id="txtFrmPreco0"]'
-#ITEM 4 = '//*[@id="txtFrmPreco3"]'
+item = 1
+XpathVencePerde = '//*[@id="frmCotarCotacaoEmDisputa"]/table/tbody/tr[' + str(4 * item) + ']/td[8]/span'
+xpath_checar_preco = '//*[@id="frmCotarCotacaoEmDisputa"]/table/tbody/tr[' + str(4 * item) + ']/td[7]'
+xpath_frm_preco = '//*[@id="txtFrmPreco' + str(item-1) + '"]'
 
 input('Pressione qualquer tecla para continuar...')
 
@@ -65,7 +58,7 @@ while True:
     
     while (TxtVencePerde == "Você perde!" and ChecarPreco > MeuPreco):
         try:
-            ChecarPreco -= random.uniform(0.01, 1) # Lance entre 1 centavo e 1 real para não ficar uniforme
+            ChecarPreco -= uniform(0.01, 1) # Lance entre 1 centavo e 1 real para não ficar uniforme
             elemento = navegador.find_element("xpath", xpath_frm_preco) # Campo formulario de lance
             elemento.send_keys("{:.4f}".format(ChecarPreco)) # Enviando lances com 4 casas decimais
             elemento = navegador.find_element("xpath", '//*[@id="btnCotarPrecoRodape"]').click() # Botao cotar preço
@@ -81,7 +74,7 @@ while True:
 
     while (TxtVencePerde == "Você vence!"):
         navegador.refresh()
-        time.sleep(0.1)
+        sleep(0.1)
         try:
             TxtVencePerde = navegador.find_element("xpath", XpathVencePerde).text
         except:
