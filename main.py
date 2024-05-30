@@ -11,17 +11,15 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 from re import sub # modulo de expressões regulares (regex)
 from random import uniform
-import getpass # modulo para receber senhas sem exibi-las no terminal enquanto o usuário digita
 from time import sleep
 
 def converte_preco_float(str_valor):
-    numero = sub('[^\d,]', '', str_valor)
+    numero = sub(r'[^\d,]', '', str_valor)
     numero = float(numero.replace(',', '.'))
     return numero
 
 num_dispensa = input("Cole o numero da dispensa: ")
-cnpj = " " + input("Cole o cnpj: ")
-senha = getpass.getpass("Digite sua senha: ")
+num_dispensa = sub(r'[^\d]', '', num_dispensa)
 
 servico = Service(ChromeDriverManager().install()) # Atualiza o webdriver
 navegador = webdriver.Chrome(service=servico)
@@ -29,14 +27,10 @@ navegador.get("https://comprasnet3.ba.gov.br/Fornecedor/LoginDispensa.asp?txtFun
 sleep(1)
 
 # Credenciais/Autenticação
-try:
-    WebDriverWait(navegador, 10).until(EC.visibility_of_element_located((By.XPATH, '//*[@id="txtCnpj"]')))
-    navegador.find_element("xpath", '//*[@id="txtCnpj"]').send_keys(cnpj)
-    navegador.find_element("xpath", '//*[@id="txtSenha"]').send_keys(senha)
-    navegador.find_element("xpath", '//*[@id="btnAcessar"]').click()
-except:
-    print("Credencie manualmente.")
-    input("Pressione qualquer tecla para continuar...")
+print('----------------------------------------')
+print('----------------------------------------')
+print('\033[1;33;41m ATENÇÃO! Credencie e cadastre marca, modelo e preço. \033[m')
+input("Pressione qualquer tecla para INICIAR...")
 
 while True:
     try:
@@ -58,7 +52,7 @@ for i in range(quant_item):
             meu_preco.append(preco)
             break
         except ValueError:
-            print("Por favor, insira um número válido para o preço.")
+            print('\033[1;33;41m Digite um valor válido. \033[m')
 
 em_disputa = [True] * quant_item
 xpath_btn_enviar = '//*[@id="btnCotarPrecoRodape"]'
@@ -90,7 +84,7 @@ def melhor_preco(f_item):
         preco = converte_preco_float(preco) # converter preço em número
         return preco
     except:
-        print("Erro: def melhor_preco item: ", f_item)
+        print(f"Erro: def melhor_preco item: {f_item}")
         input("Pressione qualquer tecla para continuar...")
 
 def xpath_frm_lance(f_item):
@@ -112,7 +106,7 @@ while (any(em_disputa)):
                 elemento = navegador.find_element("xpath", xpath_frm_lance(i)) # Campo formulario de lance
                 elemento.send_keys("{:.4f}".format(lance)) # Enviando lances com 4 casas decimais
             except:
-                print("Erro aguardando xpath_frm_lance item: ", i)
+                print(f"Erro aguardando xpath_frm_lance item: {i}")
                 input("Pressione qualquer tecla para encerrar...")
             deu_lance = True
         i += 1
