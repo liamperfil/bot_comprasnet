@@ -9,13 +9,13 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 
-import re # modulo de expressões regulares (regex)
-import random
+from re import sub # modulo de expressões regulares (regex)
+from random import uniform
 import getpass # modulo para receber senhas sem exibi-las no terminal enquanto o usuário digita
-import time
+from time import sleep
 
 def converte_preco_float(str_valor):
-    numero = re.sub('[^\d,]', '', str_valor)
+    numero = sub('[^\d,]', '', str_valor)
     numero = float(numero.replace(',', '.'))
     return numero
 
@@ -26,7 +26,7 @@ senha = getpass.getpass("Digite sua senha: ")
 servico = Service(ChromeDriverManager().install()) # Atualiza o webdriver
 navegador = webdriver.Chrome(service=servico)
 navegador.get("https://comprasnet3.ba.gov.br/Fornecedor/LoginDispensa.asp?txtFuncionalidade=&txtNumeroDispensa=" + num_dispensa)
-time.sleep(1)
+sleep(1)
 
 # Credenciais/Autenticação
 try:
@@ -107,7 +107,7 @@ while (any(em_disputa)):
         em_disputa[i] = meu_preco[i] <= melhor_preco(i)
         if (meu_preco[i] != 0 and vence_perde(i) and em_disputa[i]):
             lance = melhor_preco(i)
-            lance -= random.uniform(0.01, 0.1)
+            lance -= uniform(0.01, 0.1)
             try:
                 elemento = navegador.find_element("xpath", xpath_frm_lance(i)) # Campo formulario de lance
                 elemento.send_keys("{:.4f}".format(lance)) # Enviando lances com 4 casas decimais
