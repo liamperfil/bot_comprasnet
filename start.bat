@@ -1,3 +1,7 @@
+pip install selenium
+pip install webdriver-manager
+pip install chromedriver-binary
+cls
 @echo off
 title BOT SERVER CONSOLE
 :start
