@@ -15,22 +15,23 @@ from time import sleep
 
 servico = Service(ChromeDriverManager().install()) # Atualiza o webdriver
 
-def ValorNumerico(StrValor):
-      numero = sub('[^\d,]', '', StrValor)
-      numero = float(numero.replace(',', '.'))
-      return numero
+def conv_float(str_value):
+      float_value = sub('[^\d,]', '', str_value)
+      float_value = float(float_value.replace(',', '.'))
+      return float_value
 
 #########################################
-NumeroDispensa = input("Digite o número da dispensa: ")
+num_dispensa = input("Digite o número da dispensa: ")
 cnpj = " " + input("Digite o cnpj: ")
 senha = str(getpass.getpass("Digite sua senha: "))
-iMeuPreco = input("Digite o preço do item x: ")
-MeuPreco = ValorNumerico(iMeuPreco)
+meu_preco = input("Digite o preço do item x: ")
+meu_preco = conv_float(meu_preco)
+item = 1
 #########################################
 
 # Inicializa o navegador webdriver Chrome E Abre uma página da web
 navegador = webdriver.Chrome(service=servico)
-navegador.get("https://comprasnet3.ba.gov.br/Fornecedor/LoginDispensa.asp?txtFuncionalidade=&txtNumeroDispensa=" + NumeroDispensa)
+navegador.get("https://comprasnet3.ba.gov.br/Fornecedor/LoginDispensa.asp?txtFuncionalidade=&txtNumeroDispensa=" + num_dispensa)
 
 # Preencher os dados de login e senha
 try:
@@ -41,8 +42,7 @@ try:
 except:
     input('Insira as credenciais manualmente')
 
-item = 1
-XpathVencePerde = '//*[@id="frmCotarCotacaoEmDisputa"]/table/tbody/tr[' + str(4 * item) + ']/td[8]/span'
+xpath_status_disputa = '//*[@id="frmCotarCotacaoEmDisputa"]/table/tbody/tr[' + str(4 * item) + ']/td[8]/span'
 xpath_checar_preco = '//*[@id="frmCotarCotacaoEmDisputa"]/table/tbody/tr[' + str(4 * item) + ']/td[7]'
 xpath_frm_preco = '//*[@id="txtFrmPreco' + str(item-1) + '"]'
 
@@ -50,39 +50,39 @@ input('Pressione qualquer tecla para continuar...')
 
 while True:
     try:
-        TxtVencePerde = navegador.find_element("xpath", XpathVencePerde).text # Texto Você vence! ou Você perde!
-        ChecarPreco = navegador.find_element("xpath", xpath_checar_preco).text # recebe preço em string
-        ChecarPreco = ValorNumerico(ChecarPreco) # converter preço em número
+        status_disputa = navegador.find_element("xpath", xpath_status_disputa).text # Texto Você vence! ou Você perde!
+        checar_preco = navegador.find_element("xpath", xpath_checar_preco).text # recebe preço em string
+        checar_preco = conv_float(checar_preco) # converter preço em número
     except:
         break
     
-    while (TxtVencePerde == "Você perde!" and ChecarPreco > MeuPreco):
+    while (status_disputa == "Você perde!" and checar_preco > meu_preco):
         try:
-            ChecarPreco -= uniform(0.01, 1) # Lance entre 1 centavo e 1 real para não ficar uniforme
+            checar_preco -= uniform(0.01, 1) # Lance entre 1 centavo e 1 real para não ficar uniforme
             elemento = navegador.find_element("xpath", xpath_frm_preco) # Campo formulario de lance
-            elemento.send_keys("{:.4f}".format(ChecarPreco)) # Enviando lances com 4 casas decimais
+            elemento.send_keys("{:.4f}".format(checar_preco)) # Enviando lances com 4 casas decimais
             elemento = navegador.find_element("xpath", '//*[@id="btnCotarPrecoRodape"]').click() # Botao cotar preço
             WebDriverWait(navegador, 300).until(EC.visibility_of_element_located((By.XPATH, '//*[@id="btnCotarPrecoRodape"]')))
-            TxtVencePerde = navegador.find_element("xpath", XpathVencePerde).text # Atualiza Você vence! ou Você perde!
-            ChecarPreco = navegador.find_element("xpath", xpath_checar_preco).text # Atualiza o preço
-            ChecarPreco = ValorNumerico(ChecarPreco) # Converte preço em número
+            status_disputa = navegador.find_element("xpath", xpath_status_disputa).text # Atualiza Você vence! ou Você perde!
+            checar_preco = navegador.find_element("xpath", xpath_checar_preco).text # Atualiza o preço
+            checar_preco = conv_float(checar_preco) # Converte preço em número
         except:
             break
     
-    if (ChecarPreco < MeuPreco):
+    if (checar_preco < meu_preco):
         print('PREÇO ABAIXO DO VALOR REGISTRADO!!!')
 
-    while (TxtVencePerde == "Você vence!"):
+    while (status_disputa == "Você vence!"):
         navegador.refresh()
         sleep(0.1)
         try:
-            TxtVencePerde = navegador.find_element("xpath", XpathVencePerde).text
+            status_disputa = navegador.find_element("xpath", xpath_status_disputa).text
         except:
             break
 
     # Verifica se ainda está em disputa
     try:
-        WebDriverWait(navegador, 60).until(EC.presence_of_element_located((By.XPATH, XpathVencePerde)))
+        WebDriverWait(navegador, 60).until(EC.presence_of_element_located((By.XPATH, xpath_status_disputa)))
         continue
     except:
         break
