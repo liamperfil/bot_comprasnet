@@ -48,7 +48,7 @@ for i in range(quant_item):
             meu_preco.append(preco)
             break
         except ValueError:
-            print('\033[1;33;41m Digite um valor válido. \033[m')
+            print('\033[1;33;41m Erro: Digite um valor válido. \033[m')
 
 em_disputa = [True] * quant_item
 xpath_btn_enviar = '//*[@id="btnCotarPrecoRodape"]'
