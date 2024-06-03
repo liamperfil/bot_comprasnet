@@ -4,45 +4,31 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
-
 from re import sub # modulo de expressões regulares (regex)
 from random import uniform
-import getpass # modulo para receber senhas sem exibi-las no terminal enquanto o usuário digita
 from time import sleep
 
 servico = Service(ChromeDriverManager().install()) # Atualiza o webdriver
 
 def conv_float(str_value):
-      float_value = sub('[^\d,]', '', str_value)
+      float_value = sub(r'[^\d,]', '', str_value)
       float_value = float(float_value.replace(',', '.'))
       return float_value
 
-#########################################
 num_dispensa = input("Digite o número da dispensa: ")
-cnpj = " " + input("Digite o cnpj: ")
-senha = str(getpass.getpass("Digite sua senha: "))
-meu_preco = input("Digite o preço do item x: ")
-meu_preco = conv_float(meu_preco)
 item = 1
-#########################################
+meu_preco = input(f"Digite o preço do item {item}: ")
+meu_preco = conv_float(meu_preco)
 
 # Inicializa o navegador webdriver Chrome E Abre uma página da web
 navegador = webdriver.Chrome(service=servico)
 navegador.get("https://comprasnet3.ba.gov.br/Fornecedor/LoginDispensa.asp?txtFuncionalidade=&txtNumeroDispensa=" + num_dispensa)
 
-# Preencher os dados de login e senha
-try:
-    WebDriverWait(navegador, 60).until(EC.presence_of_element_located((By.XPATH, '//*[@id="txtCnpj"]')))
-    navegador.find_element("xpath", '//*[@id="txtCnpj"]').send_keys(cnpj)
-    navegador.find_element("xpath", '//*[@id="txtSenha"]').send_keys(senha)
-    navegador.find_element("xpath", '//*[@id="btnAcessar"]').click()
-except:
-    input('Insira as credenciais manualmente')
-
 xpath_status_disputa = '//*[@id="frmCotarCotacaoEmDisputa"]/table/tbody/tr[' + str(4 * item) + ']/td[8]/span'
 xpath_checar_preco = '//*[@id="frmCotarCotacaoEmDisputa"]/table/tbody/tr[' + str(4 * item) + ']/td[7]'
 xpath_frm_preco = '//*[@id="txtFrmPreco' + str(item-1) + '"]'
 
+print('\033[1;34;40m Credenciamento manual \033[m')
 input('Pressione qualquer tecla para continuar...')
 
 while True:
@@ -56,9 +42,9 @@ while True:
     while (status_disputa == "Você perde!" and checar_preco > meu_preco):
         try:
             checar_preco -= uniform(0.01, 1) # Lance entre 1 centavo e 1 real para não ficar uniforme
-            elemento = navegador.find_element("xpath", xpath_frm_preco) # Campo formulario de lance
-            elemento.send_keys("{:.4f}".format(checar_preco)) # Enviando lances com 4 casas decimais
-            elemento = navegador.find_element("xpath", '//*[@id="btnCotarPrecoRodape"]').click() # Botao cotar preço
+            frm_preco = navegador.find_element("xpath", xpath_frm_preco) # Campo formulario de lance
+            frm_preco.send_keys("{:.4f}".format(checar_preco)) # Enviando lances com 4 casas decimais
+            btn_enviar_preco = navegador.find_element("xpath", '//*[@id="btnCotarPrecoRodape"]').click() # Botao cotar preço
             WebDriverWait(navegador, 300).until(EC.visibility_of_element_located((By.XPATH, '//*[@id="btnCotarPrecoRodape"]')))
             status_disputa = navegador.find_element("xpath", xpath_status_disputa).text # Atualiza Você vence! ou Você perde!
             checar_preco = navegador.find_element("xpath", xpath_checar_preco).text # Atualiza o preço
