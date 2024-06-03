@@ -3,6 +3,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.keys import Keys
 from webdriver_manager.chrome import ChromeDriverManager
 from re import sub # modulo de expressões regulares (regex)
 from random import uniform
@@ -19,7 +20,7 @@ num_dispensa = input("Digite o número da dispensa: ")
 item = 1
 meu_preco = input(f"Digite o preço do item {item}: ")
 meu_preco = conv_float(meu_preco)
-print(f'Confira seu preço, você digitou: {meu_preco}')
+print(f'\033[7;35;40m Confira seu preço, você digitou: {meu_preco} \033[m')
 
 # Inicializa o navegador webdriver Chrome E Abre uma página da web
 navegador = webdriver.Chrome(service=servico)
@@ -28,6 +29,19 @@ navegador.get("https://comprasnet3.ba.gov.br/Fornecedor/LoginDispensa.asp?txtFun
 xpath_status_disputa = '//*[@id="frmCotarCotacaoEmDisputa"]/table/tbody/tr[' + str(4 * item) + ']/td[8]/span'
 xpath_preco_registrado = '//*[@id="frmCotarCotacaoEmDisputa"]/table/tbody/tr[' + str(4 * item) + ']/td[7]'
 xpath_frm_preco = '//*[@id="txtFrmPreco' + str(item-1) + '"]'
+
+try:
+    with open(r'C:\ambiente_virtual\senha.py', 'rb') as resposta:
+        conteudo_arquivo = resposta.read()
+    exec(conteudo_arquivo.decode())
+    WebDriverWait(navegador, 300).until(EC.visibility_of_element_located((By.XPATH, '//*[@id="txtCnpj"]')))
+    navegador.find_element("xpath", '//*[@id="txtSenha"]').click()
+    navegador.find_element("xpath", '//*[@id="txtSenha"]').send_keys(senha)
+    navegador.find_element("xpath", '//*[@id="txtCnpj"]').click()
+    navegador.find_element("xpath", '//*[@id="txtCnpj"]').send_keys(cnpj)
+    navegador.find_element("xpath", '//*[@id="btnAcessar"]').click()
+except:
+    print(r'Não localizamos o diretorio C:\ambiente_virtual\senha.py')
 
 print('\033[1;34;40m Preencha a autenticação no site \033[m')
 print('\033[1;34;40m Após credenciar pressione qualquer tecla para continuar... \033[m')
