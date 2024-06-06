@@ -31,6 +31,7 @@ xpath_preco_registrado = '//*[@id="frmCotarCotacaoEmDisputa"]/table/tbody/tr[' +
 xpath_frm_preco = '//*[@id="txtFrmPreco' + str(item-1) + '"]'
 
 try:
+    # Para isso funcionar crie um arquivo senha.py com as variaveis "senha" e "cnpj"
     with open(r'C:\ambiente_virtual\senha.py', 'rb') as resposta:
         conteudo_arquivo = resposta.read()
     exec(conteudo_arquivo.decode())
