@@ -17,7 +17,7 @@ def conv_float(str_value):
       return float_value
 
 num_dispensa = input("Digite o número da dispensa: ")
-item = 1
+item = int(input("Digite o número do item: "))
 meu_preco = input(f"Digite o preço do item {item}: ")
 meu_preco = conv_float(meu_preco)
 print(f'\033[7;35;40m Confira seu preço, você digitou: {meu_preco} \033[m')
