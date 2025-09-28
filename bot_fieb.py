@@ -9,7 +9,7 @@ import re
 import random
 import time
 
-meu_preco = 700, 0 # Isso é uma tupla, se for um item só é necessario que termine em virgula
+meu_preco = 700, 0 # Isto é uma tupla, se for apenas um item, é necessário que termine em virgula.
 endereco = input('Cole o endereco: ')
 
 try:
